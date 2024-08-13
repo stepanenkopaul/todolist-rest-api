@@ -1,0 +1,6 @@
+.env
+.idea
+.tap
+bin
+dist
+node_modules
