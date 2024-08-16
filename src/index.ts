@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { KeycloakService } from './services/keycloak';
 
 const server = Fastify({
   logger: true
@@ -10,9 +11,22 @@ server.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE']
 });
 
-server.get('/items', async (request, reply) => {
-  const items = [{ id: 1, name: 'Item One' }, { id: 2, name: 'Item Two' }];
-  return items;
+server.get('/', async () => ({
+  message: 'todolist version 0.0.0',
+}));
+
+server.get('/items', { preHandler: KeycloakService.authorize }, async (request, reply) => {
+
+
+    console.log('User:', request.user);
+
+    if (request.user == null){
+      return {message: 'user unathorized'};
+    }
+    const items = [{ id: 1, name: 'Item One' }, { id: 2, name: 'Item Two' }];
+    return items;
+
+  
 });
 
 server.post('/items', async (request, reply) => {
@@ -29,5 +43,7 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+
 
 start();
