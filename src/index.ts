@@ -5,24 +5,22 @@ import { MongoClient, Db } from 'mongodb';
 import { Document } from 'mongodb';
 
 interface Item extends Document {
-  name: string;
-  // Добавьте другие поля, если необходимо
+  text : string;
+  isEditing : false;
+  priority : 0;
+  state : 0;
+  startDate : Date;
+  endDate : Date;
 }
 
 const server = Fastify({
-  logger: true
+  //logger: true
 });
 
 const url = 'mongodb://admin:admin@localhost:27018';
-const dbName = 'myDatabase'; // Название базы данных
+const dbName = 'albumSchedule';
 let db: Db;
 
-/*
-let items: Array<{ id: number, name: string }> = [
-  { id: 1, name: 'Item One' },
-  { id: 2, name: 'Item Two' }
-];
-*/
 
 const connectToMongo = async () => {
   const client = new MongoClient(url);
