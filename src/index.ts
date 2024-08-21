@@ -1,8 +1,12 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { KeycloakService } from './services/keycloak';
-import { MongoClient, Db } from 'mongodb';
+import { ObjectId, MongoClient, Db } from 'mongodb';
 import { Document } from 'mongodb';
+
+interface DeleteRequest {
+  id: string;
+}
 
 interface Item extends Document {
   text : string;
@@ -11,6 +15,7 @@ interface Item extends Document {
   state : 0;
   startDate : Date;
   endDate : Date;
+  userId : string;
 }
 
 const server = Fastify({
@@ -51,38 +56,48 @@ server.get('/', async () => ({
   message: 'todolist version 0.0.0',
 }));
 
-server.get('/items', { preHandler: KeycloakService.authorize }, async (request, reply) => {
-
-  const items = await db.collection('items').find().toArray();
+server.get('/getItems', { preHandler: KeycloakService.authorize }, async (request, reply) => {
 
 
-    console.log('User:', request.user?.username);
-
+  const items = await db.collection('items').find({userId: request.user?.id}).toArray();
+  
     if (request.user == null){
       return {message: 'user unathorized'};
     }
-    //const items = [{ id: 1, name: 'Item One' }, { id: 2, name: 'Item Two' }];
     return items;
 
-  
+});
+
+server.post('/deleteItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
+  let { id } = request.body as DeleteRequest; // Извлекаем id из объекта { id: "значение" }
+  console.log("deleteItem received id:", id);
+
+  try {
+    // Конвертируем строку в ObjectId
+    const objectId = new ObjectId(id);
+    const result = await db.collection('items').deleteOne({ _id: objectId });
+
+    if (result.deletedCount === 1) {
+      console.log("Document successfully deleted");
+      return { success: true, message: "Document deleted" };
+    } else {
+      return { success: false, message: "No document found with that ID" };
+    }
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    return { success: false, message: "Invalid ID format" };
+  }
 });
 
 
-server.post('/items', { preHandler: KeycloakService.authorize }, async (request, reply) => {
-  console.log("items post");
+server.post('/addItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
 
-  console.log('User:', request.user?.username);
 
-  const newItem = request.body as Item;
+  let newItem = request.body as Item;
+  newItem.userId = request.user?.id ?? 'undefined user';
   const result = await db.collection('items').insertOne(newItem);
   return { id: result.insertedId, ...newItem };; // Возвращаем вставленный элемент
 
-  /*
-  const newItem = request.body as { name: string }; // Изменяем тип на более конкретный
-  const itemWithId = { id: Math.random(), name: newItem.name }; // Убедитесь, что оба свойства присутствуют
-  items.push(itemWithId); // Добавление нового элемента в массив items
-*/
-  //return itemWithId;
 });
 
 
