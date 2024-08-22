@@ -8,14 +8,28 @@ interface DeleteRequest {
   id: string;
 }
 
-interface Item extends Document {
-  text : string;
-  isEditing : false;
-  priority : 0;
-  state : 0;
-  startDate : Date;
-  endDate : Date;
-  userId : string;
+// Интерфейс для данных, которые приходят с клиента
+interface ClientItem {
+  _id: string;
+  text: string;
+  priority: number;
+  state: number;
+  startDate: Date;
+  endDate: Date;
+  userId: string;
+  isEditing: boolean;
+  isSaved: boolean;
+}
+
+// Интерфейс для данных, которые будут сохранены в базе данных
+interface ServerItem extends Document {
+  _id: ObjectId;
+  text: string;
+  priority: number;
+  state: number;
+  startDate: Date;
+  endDate: Date;
+  userId: string;
 }
 
 const server = Fastify({
@@ -90,10 +104,34 @@ server.post('/deleteItem', { preHandler: KeycloakService.authorize }, async (req
 });
 
 
+server.post('/saveItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
+  // Получаем данные от клиента и приводим их к типу ClientItem
+  const clientItem = request.body as ClientItem;
+  const objectId = new ObjectId(clientItem._id);
+  // Преобразуем клиентский объект в объект, который будет сохранен на сервере
+  const serverItem: ServerItem = {
+    _id: objectId, 
+    text: clientItem.text,
+    priority: clientItem.priority,
+    state: clientItem.state,
+    startDate: new Date(clientItem.startDate), 
+    endDate: new Date(clientItem.endDate), 
+    userId: clientItem.userId
+  };
+
+  const result = await db.collection('items').updateOne({ _id: objectId }, {$set:serverItem});
+  if (result.modifiedCount > 0) {
+    return { success: true, message: "Item successfully updated" };
+  } else {
+    return { success: false, message: "No item was updated. Maybe the item was not found." };
+  }
+});
+
+
 server.post('/addItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
 
 
-  let newItem = request.body as Item;
+  let newItem = request.body as ServerItem;
   newItem.userId = request.user?.id ?? 'undefined user';
   const result = await db.collection('items').insertOne(newItem);
   return { id: result.insertedId, ...newItem };; // Возвращаем вставленный элемент
