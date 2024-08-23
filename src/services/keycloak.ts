@@ -1,8 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-
-
 declare module 'fastify' {
   interface FastifyRequest {
     user?: KeycloakUser;
@@ -53,9 +51,7 @@ export class KeycloakService {
       }
 
       const JWKSet = createRemoteJWKSet(
-        new URL(
-          `${'http://localhost:8080'}/realms/${'todolist'}/protocol/openid-connect/certs`
-        )
+        new URL(`${'http://localhost:8080'}/realms/${'todolist'}/protocol/openid-connect/certs`)
       );
       const { payload } = await jwtVerify(authHeaderWords[1], JWKSet);
 

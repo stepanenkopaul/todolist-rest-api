@@ -40,7 +40,6 @@ const url = 'mongodb://admin:admin@localhost:27018';
 const dbName = 'albumSchedule';
 let db: Db;
 
-
 const connectToMongo = async () => {
   const client = new MongoClient(url);
 
@@ -63,7 +62,7 @@ const connectToMongo = async () => {
 
 server.register(cors, {
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 });
 
 server.get('/', async () => ({
@@ -71,20 +70,17 @@ server.get('/', async () => ({
 }));
 
 server.get('/getItems', { preHandler: KeycloakService.authorize }, async (request, reply) => {
+  const items = await db.collection('items').find({ userId: request.user?.id }).toArray();
 
-
-  const items = await db.collection('items').find({userId: request.user?.id}).toArray();
-  
-    if (request.user == null){
-      return {message: 'user unathorized'};
-    }
-    return items;
-
+  if (request.user == null) {
+    return { message: 'user unathorized' };
+  }
+  return items;
 });
 
 server.post('/deleteItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
   let { id } = request.body as DeleteRequest; // Извлекаем id из объекта { id: "значение" }
-  console.log("deleteItem received id:", id);
+  console.log('deleteItem received id:', id);
 
   try {
     // Конвертируем строку в ObjectId
@@ -92,17 +88,16 @@ server.post('/deleteItem', { preHandler: KeycloakService.authorize }, async (req
     const result = await db.collection('items').deleteOne({ _id: objectId });
 
     if (result.deletedCount === 1) {
-      console.log("Document successfully deleted");
-      return { success: true, message: "Document deleted" };
+      console.log('Document successfully deleted');
+      return { success: true, message: 'Document deleted' };
     } else {
-      return { success: false, message: "No document found with that ID" };
+      return { success: false, message: 'No document found with that ID' };
     }
   } catch (error) {
-    console.error("Error deleting document:", error);
-    return { success: false, message: "Invalid ID format" };
+    console.error('Error deleting document:', error);
+    return { success: false, message: 'Invalid ID format' };
   }
 });
-
 
 server.post('/saveItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
   // Получаем данные от клиента и приводим их к типу ClientItem
@@ -110,34 +105,29 @@ server.post('/saveItem', { preHandler: KeycloakService.authorize }, async (reque
   const objectId = new ObjectId(clientItem._id);
   // Преобразуем клиентский объект в объект, который будет сохранен на сервере
   const serverItem: ServerItem = {
-    _id: objectId, 
+    _id: objectId,
     text: clientItem.text,
     priority: clientItem.priority,
     state: clientItem.state,
-    startDate: new Date(clientItem.startDate), 
-    endDate: new Date(clientItem.endDate), 
-    userId: clientItem.userId
+    startDate: new Date(clientItem.startDate),
+    endDate: new Date(clientItem.endDate),
+    userId: clientItem.userId,
   };
 
-  const result = await db.collection('items').updateOne({ _id: objectId }, {$set:serverItem});
+  const result = await db.collection('items').updateOne({ _id: objectId }, { $set: serverItem });
   if (result.modifiedCount > 0) {
-    return { success: true, message: "Item successfully updated" };
+    return { success: true, message: 'Item successfully updated' };
   } else {
-    return { success: false, message: "No item was updated. Maybe the item was not found." };
+    return { success: false, message: 'No item was updated. Maybe the item was not found.' };
   }
 });
 
-
 server.post('/addItem', { preHandler: KeycloakService.authorize }, async (request, reply) => {
-
-
   let newItem = request.body as ServerItem;
   newItem.userId = request.user?.id ?? 'undefined user';
   const result = await db.collection('items').insertOne(newItem);
-  return { id: result.insertedId, ...newItem };; // Возвращаем вставленный элемент
-
+  return { id: result.insertedId, ...newItem }; // Возвращаем вставленный элемент
 });
-
 
 const start = async () => {
   try {
@@ -149,7 +139,5 @@ const start = async () => {
     process.exit(1);
   }
 };
-
-
 
 start();

@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src | pino-pretty --colorize",
+    "start": "ts-node src/index.ts | pino-pretty --colorize",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettier": "prettier . -c",
+    "prettier:fix": "prettier . -w"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +25,11 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.14.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "prettier": "^3.3.2",
+    "pino-pretty": "^11.2.1",
+    "tsx": "^4.16.0"
   }
 }
