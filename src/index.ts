@@ -8,28 +8,26 @@ interface DeleteRequest {
   id: string;
 }
 
-// Интерфейс для данных, которые приходят с клиента
-interface ClientItem {
-  _id: string;
+interface BaseItem {
+  _id: string | ObjectId; // Тип объединен для поддержки обоих вариантов
   text: string;
   priority: number;
   state: number;
   startDate: Date;
   endDate: Date;
   userId: string;
+}
+
+// Интерфейс для данных клиента
+interface ClientItem extends BaseItem {
+  _id: string; // У клиента _id может быть строкой
   isEditing: boolean;
   isSaved: boolean;
 }
 
-// Интерфейс для данных, которые будут сохранены в базе данных
-interface ServerItem extends Document {
-  _id: ObjectId;
-  text: string;
-  priority: number;
-  state: number;
-  startDate: Date;
-  endDate: Date;
-  userId: string;
+// Интерфейс для данных сервера
+interface ServerItem extends BaseItem, Document {
+  _id: ObjectId; // Серверная версия имеет строго ObjectId
 }
 
 const server = Fastify({
